@@ -9,10 +9,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@slack/bolt": "^3.5.0",
-    "airtable": "^0.11.1",
+    "@slack/bolt": "^4.5.0",
+    "airtable": "^0.12.2",
     "crypto": "^1.0.1",
-    "dotenv": "^10.0.0",
-    "emoji-hash-gen": "^1.0.2"
+    "dotenv": "^17.2.3",
+    "emoji-hash-gen": "^1.0.7"
   }
 }
