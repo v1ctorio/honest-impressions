@@ -23,6 +23,9 @@ async function main() {
     }
     
     await app.start(PORT!!);
+
+    console.log(`Loaded env vars. IMPRESSIONS_CHANNEL_ID=${process.env.IMPRESSIONS_CHANNEL_ID}, REVIEW_CHANNEL_ID=${process.env.REVIEW_CHANNEL_ID}`);
+
     console.log(`\nHonest impressions started on ${PORT ? `port ${PORT}` : 'socket mode'}!`);
 
 
