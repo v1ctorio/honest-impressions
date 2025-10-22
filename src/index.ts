@@ -3,6 +3,7 @@ import 'dotenv/config';
 
 const { SLACK_SIGNING_SECRET, SLACK_BOT_TOKEN, PORT, SALT, BANNED_LIST_LOCATION, REVIEWERS } = process.env;
 import BuildApp from './app.js';
+import { InitBannedList } from './utils.js';
 
 async function main() {
 
@@ -10,6 +11,8 @@ async function main() {
 
     if (!BANNED_LIST_LOCATION) {
         console.log("WARN: BANNED_LIST_LOCATION not set, storing banned user list on memory. This will make the banned list reset on every app restart.");
+    } else {
+        await InitBannedList();
     }
     if (!SALT) {
         console.log("WARN: SALT not set, exiting.");

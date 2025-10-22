@@ -192,7 +192,7 @@ const BuildApp = (): App => {
 
       if (!action.value) throw new Error("No user hash provided to ban user.");
 
-      const ok = BanUser(action.value)
+      const ok = await BanUser(action.value)
       if (!ok) throw new Error("Could not ban user.");
 
     await client.chat.update({

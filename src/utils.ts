@@ -1,8 +1,13 @@
 import crypto from "crypto";
 import { Blocks, Modal } from "slack-block-builder";
 
-var memoryBanned: Array<string> = [];
+import fs from "fs/promises";
+
+var banned: Array<string> = [];
 export type RichText = Array<any>;
+
+const BANNED_LIST_LOCATION = process.env.BANNED_LIST_LOCATION || "";
+
 
 export function HashUser(userId: string): string {
 
@@ -11,9 +16,19 @@ export function HashUser(userId: string): string {
     return crypto.createHash('sha256').update(userId + salt).digest('hex');
 }
 
+export async function InitBannedList() {
+  if (!BANNED_LIST_LOCATION) return; 
+  try {
+    const raw = await fs.readFile(BANNED_LIST_LOCATION, "utf8");
+    banned = raw.split(/\r?\n/).filter(Boolean);
+  } catch {
+    await fs.writeFile(BANNED_LIST_LOCATION, "", { mode: 0o600 });
+    banned = [];
+  }
+}
+
 export function IsUserBanned(userHash: string): boolean {
-    //TODO: implement file-based banned list
-    return memoryBanned.includes(userHash);
+    return banned.includes(userHash);
 }
 
 export function GenerateErrorModal(error:string){
@@ -26,9 +41,11 @@ export function GenerateErrorModal(error:string){
         .buildToObject();
 }
 
-export function BanUser(userHash: string): boolean {
-    memoryBanned.push(userHash);
-    return true;
+export async function BanUser(userHash: string): Promise<boolean> {
+  if (banned.includes(userHash)) return false;
+  banned.push(userHash);
+  if (BANNED_LIST_LOCATION) await fs.appendFile(BANNED_LIST_LOCATION, userHash + "\n");
+  return true;
 }
 
 
