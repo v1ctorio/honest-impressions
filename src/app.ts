@@ -100,7 +100,45 @@ const BuildApp = (): App => {
   app.action("approve_impression", async ({ ack, body, action, client }) => {
     await ack();
 
-    console.log(body)
+    const fields = (body as any).message.blocks[2].elements[0].elements as RichText;
+
+    let updatedMessage = JSON.parse(JSON.stringify((body as any).message.blocks));
+    // sorry but i have to do raw block kit for this one :noo:
+    updatedMessage[5] = {
+      "type": "context",
+      "elements": [
+        {
+          "type": "mrkdwn",
+          "text": `:white_check_mark: This impression has been approved by <@${body.user.id}>.`
+        }
+      ]
+    }
+    try {
+
+    await client.chat.update({
+      channel: (body as any).channel.id,
+      ts: (body as any).message.ts,
+      blocks: updatedMessage
+
+    })
+
+    await client.chat.postMessage(
+      Message()
+        .channel(IMPRESSIONS_CHANNEL_ID!!)
+        .threadTs((action as any).value)
+        .text("Surely an honest impression")
+        .blocks(
+          CustomRichText(fields)
+        )
+        .buildToObject()
+    )
+  } catch(e){
+      client.chat.postEphemeral({
+        channel: (body as any).channel.id,
+        user: body.user.id,
+        text: "There was an error approving the impression. Please try again later."
+      }).catch(_=>_)
+    }
   });
 
 
