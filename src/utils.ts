@@ -1,6 +1,5 @@
 import crypto from "crypto";
 import { Blocks, Modal } from "slack-block-builder";
-const { SALT, BANNED_LIST_LOCATION } = process.env;
 
 var memoryBanned: Array<string> = [];
 export type RichText = Array<any>;

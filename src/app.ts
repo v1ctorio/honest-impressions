@@ -1,6 +1,5 @@
-import Slack, { App, MessageShortcut, SlackActionMiddlewareArgs, SlackShortcutMiddlewareArgs, webApi } from "@slack/bolt";
-import crypto from "crypto";
-import { Actions, Blocks, Button, Context, Divider, Elements, Message, Modal } from 'slack-block-builder';
+import Slack, { App, BlockButtonAction, MessageShortcut, SlackShortcutMiddlewareArgs, webApi } from "@slack/bolt";
+import { Actions, Blocks, Button, Context, Divider, Message, Modal } from 'slack-block-builder';
 import { CustomRichText, GenerateErrorModal, HashUser, IsUserBanned, RichText, RichTextInput } from "./utils.js";
 
 
@@ -85,19 +84,19 @@ const BuildApp = (): App => {
         channel: IMPRESSIONS_CHANNEL_ID!!,
         user: body.user.id,
         text: "There was an error submitting your honest impression for review. Please try again later. Ask a maintainer to check if the app is in the review channel.",
-      });
+      }).catch(_=>_);
       return;
     } else {
       client.chat.postEphemeral({
         channel: IMPRESSIONS_CHANNEL_ID!!,
         user: body.user.id,
         text: "Your honest impression has been submitted for review. Thank you!",
-      });
+      }).catch(_=>_);
     }
   });
 
 
-  app.action("approve_impression", async ({ ack, body, action, client }) => {
+  app.action<BlockButtonAction>("approve_impression", async ({ ack, body, action, client }) => {
     await ack();
 
     const fields = (body as any).message.blocks[2].elements[0].elements as RichText;
@@ -116,16 +115,16 @@ const BuildApp = (): App => {
     try {
 
     await client.chat.update({
-      channel: (body as any).channel.id,
-      ts: (body as any).message.ts,
+      channel: REVIEW_CHANNEL_ID!,
+      ts: body.message!.ts,
       blocks: updatedMessage
 
     })
 
     await client.chat.postMessage(
       Message()
-        .channel(IMPRESSIONS_CHANNEL_ID!!)
-        .threadTs((action as any).value)
+        .channel(IMPRESSIONS_CHANNEL_ID!)
+        .threadTs(action.value)
         .text("Surely an honest impression")
         .blocks(
           CustomRichText(fields)
@@ -137,6 +136,22 @@ const BuildApp = (): App => {
         channel: (body as any).channel.id,
         user: body.user.id,
         text: "There was an error approving the impression. Please try again later."
+      }).catch(_=>_)
+    }
+  });
+
+  app.action<BlockButtonAction>("delete_impression", async ({ ack, body, client }) => {
+    await ack();
+    try {
+      await client.chat.delete({
+        channel: REVIEW_CHANNEL_ID!,
+        ts: body.message!.ts,
+      });
+    } catch (e) {
+      client.chat.postEphemeral({
+        channel: REVIEW_CHANNEL_ID!,
+        user: body.user.id,
+        text: "There was an error deleting the impression. Please try again later."
       }).catch(_=>_)
     }
   });
