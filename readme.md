@@ -49,6 +49,16 @@ settings:
 1. Run `npm run build` to compile the typescript code.
 1. Run `npm start` to start the bot.
 
+## or with docker 
+```
+docker run --env-file ./.env \
+       --name honest-impressions-app \
+       -v honest-impressions-data:/usr/src/app/data \
+       -d honest-impressions
+```
+will create a volume for persistent data storage and store by default the banned users in `/usr/src/app/data/banned_users.txt`. No need to set `BANNED_LIST_LOCATION`. 
+
+
 
 # Concerns
 This bot is designed to minimize data storage. However, purely by being a Slack app, it is NOT fully anonymous. If a bad actor was able to extract both the app's slack credentials and the salt used for hashing, they could potentially deanonymize users. \
