@@ -1,6 +1,6 @@
 import Slack, { App, BlockButtonAction, MessageShortcut, SlackShortcutMiddlewareArgs, webApi } from "@slack/bolt";
 import { Actions, Blocks, Button, Context, Divider, Message, Modal } from 'slack-block-builder';
-import { CustomRichText, GenerateErrorModal, HashUser, IsUserBanned, RichText, RichTextInput } from "./utils.js";
+import { BanUser, CustomRichText, GenerateErrorModal, HashUser, IsUserBanned, RichText, RichTextInput } from "./utils.js";
 
 
 const { SLACK_SIGNING_SECRET, SLACK_APP_TOKEN, SLACK_BOT_TOKEN, PORT, SALT, BANNED_LIST_LOCATION, REVIEWERS, REVIEW_CHANNEL_ID, IMPRESSIONS_CHANNEL_ID } = process.env;
@@ -152,6 +152,61 @@ const BuildApp = (): App => {
         channel: REVIEW_CHANNEL_ID!,
         user: body.user.id,
         text: "There was an error deleting the impression. Please try again later."
+      }).catch(_=>_)
+    }
+  });
+
+
+    app.action<BlockButtonAction>("ban_user", async ({ ack, body, action, client }) => {
+    await ack();
+
+    const fields = (body as any).message.blocks[2].elements[0].elements as RichText;
+
+    let updatedMessage = JSON.parse(JSON.stringify((body as any).message.blocks));
+    
+    // it feels so wrong doing taw block kit
+    updatedMessage[5] = {
+      "type": "context",
+      "elements": [
+        {
+          "type": "mrkdwn",
+          "text": `:white_check_mark: This honest impression poster has been banned by <@${body.user.id}>.`
+        }
+      ]
+    }
+    updatedMessage[6] = {
+      "type": "actions",
+      "elements": [
+        {
+          "type": "button",
+          "text": {
+            "type": "plain_text",
+            "text": "Delete"
+          },
+          "action_id": "delete_impression"
+        }
+      ]
+    }
+
+    try {
+
+      if (!action.value) throw new Error("No user hash provided to ban user.");
+
+      const ok = BanUser(action.value)
+      if (!ok) throw new Error("Could not ban user.");
+
+    await client.chat.update({
+      channel: REVIEW_CHANNEL_ID!,
+      ts: body.message!.ts,
+      blocks: updatedMessage
+
+    })
+
+  } catch(e){
+      client.chat.postEphemeral({
+        channel: (body as any).channel.id,
+        user: body.user.id,
+        text: "There was an error banning the user. Please try again later or tell a maintainer to investigate."
       }).catch(_=>_)
     }
   });

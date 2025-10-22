@@ -26,6 +26,12 @@ export function GenerateErrorModal(error:string){
         .buildToObject();
 }
 
+export function BanUser(userHash: string): boolean {
+    memoryBanned.push(userHash);
+    return true;
+}
+
+
 // custom RichText element because slack-block-builder doesn't have it yet :pf: 
 // see https://github.com/raycharius/slack-block-builder/issues/133#issuecomment-2090479474
 export function CustomRichText(fields: RichText ): any {
