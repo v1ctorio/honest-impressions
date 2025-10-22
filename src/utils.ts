@@ -1,4 +1,4 @@
-import crypto from "crypto";
+import crypto from "node:crypto";
 import { Blocks, Modal } from "slack-block-builder";
 
 import fs from "fs/promises";

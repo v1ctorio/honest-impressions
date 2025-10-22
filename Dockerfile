@@ -25,9 +25,9 @@ COPY --from=builder /usr/src/app/dist ./dist
 
 EXPOSE 3000
 
-RUN useradd --create-home appuser && \
+RUN addgroup -S appgroup && adduser -S -G appgroup appuser && \
     mkdir -p /usr/src/app/data && \
-    chown -R appuser:appuser /usr/src/app/data
+    chown -R appuser:appgroup /usr/src/app/data
 
 VOLUME /usr/src/app/data
 
