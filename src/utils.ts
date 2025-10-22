@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { Blocks, Modal } from "slack-block-builder";
 const { SALT, BANNED_LIST_LOCATION } = process.env;
 
 var memoryBanned: Array<string> = [];
@@ -16,13 +17,28 @@ export function IsUserBanned(userHash: string): boolean {
     return memoryBanned.includes(userHash);
 }
 
+export function GenerateErrorModal(error:string){
+    return Modal().title("Error!")
+        .blocks(
+          Blocks.Section().text(error)
+        )
+        .submit("Ok")
+        .callbackId("view_auto_ok")
+        .buildToObject();
+}
+
 // custom RichText element because slack-block-builder doesn't have it yet :pf: 
 // see https://github.com/raycharius/slack-block-builder/issues/133#issuecomment-2090479474
 export function CustomRichText(fields: RichText ): any {
     return {
         build: ()=>({
             type: "rich_text",
-            elements: fields
+            elements: [
+                {
+                    type: "rich_text_section",
+                    elements: fields
+                }
+            ]
         })
     }
 }

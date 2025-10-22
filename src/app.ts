@@ -1,7 +1,7 @@
 import Slack, { App, MessageShortcut, SlackActionMiddlewareArgs, SlackShortcutMiddlewareArgs, webApi } from "@slack/bolt";
 import crypto from "crypto";
-import { Actions, Blocks, Button, Divider, Elements, Message, Modal } from 'slack-block-builder';
-import { CustomRichText, HashUser, RichText, RichTextInput } from "./utils.js";
+import { Actions, Blocks, Button, Context, Divider, Elements, Message, Modal } from 'slack-block-builder';
+import { CustomRichText, GenerateErrorModal, HashUser, IsUserBanned, RichText, RichTextInput } from "./utils.js";
 
 
 const { SLACK_SIGNING_SECRET, SLACK_APP_TOKEN, SLACK_BOT_TOKEN, PORT, SALT, BANNED_LIST_LOCATION, REVIEWERS, REVIEW_CHANNEL_ID, IMPRESSIONS_CHANNEL_ID } = process.env;
@@ -21,59 +21,27 @@ const BuildApp = (): App => {
 
 
 
-  // Start the app
 
-  app.shortcut("delete_me", async ({ ack, body, say, }: SlackShortcutMiddlewareArgs<MessageShortcut>) => {
-    ack();
-    if (
-      [
-        "UJYDFQ2QL",
-        "UHFEGV147",
-        "U01D6FYHLUW",
-        "UM4BAKT6U",
-        "U0128N09Q8Y",
-      ].includes(body.user.id)
-    ) {
-      await app.client.chat.delete({
-        token: SLACK_BOT_TOKEN,
-        ts: body.message.ts,
-        channel: body.channel.id,
-      });
-      await app.client.chat.postEphemeral({
-        token: SLACK_BOT_TOKEN,
-        channel: body.channel.id,
-        user: body.user.id,
-        text: `doned`,
-      });
-      return;
-    }
-    await app.client.chat.postEphemeral({
-      token: SLACK_BOT_TOKEN,
-      channel: body.channel.id,
-      user: body.user.id,
-      text: `grrr stop bullying`,
-    });
-  });
   app.shortcut("reply_impression", async ({ ack, body, say }: SlackShortcutMiddlewareArgs<MessageShortcut>) => {
     await ack();
 
-    console.log(body);
+    const hUser = HashUser(body.user.id);
 
 
     if (body.channel.id !== IMPRESSIONS_CHANNEL_ID) {
-      const errorModal = Modal().title("Error!")
-        .blocks(
-          Blocks.Section().text("Anonymous impressions are only seeked in the honest impressions channel!")
-        )
-        .submit("Ok")
-        .callbackId("view_auto_ok")
-        .buildToObject();
-
-
 
       await app.client.views.open({
         trigger_id: body.trigger_id,
-        view: errorModal
+        view: GenerateErrorModal("Anonymous impressions are only seeked in the honest impressions channel!")
+      });
+
+      return;
+    }
+
+    if (IsUserBanned(hUser)) {
+      await app.client.views.open({
+        trigger_id: body.trigger_id,
+        view: GenerateErrorModal("You are banned from submitting honest impressions.")
       });
       return;
     }
@@ -90,7 +58,7 @@ const BuildApp = (): App => {
           )
           .blockId("dreamy_input_block")
       ).submit("Submit")
-      .privateMetaData(`${body.message_ts}`);
+      .privateMetaData(`${body.message.ts}`);
 
 
     await app.client.views.open({
@@ -109,10 +77,30 @@ const BuildApp = (): App => {
     // Sorry for TS. block kit is annoying
     const impression = impression_block["rich_text_value"]["elements"][0]["elements"] as RichText;
 
-    console.log(body, view);
 
-    console.log(impression, hUser);
+    const ok = await sendImpressionToReview(impression, view.private_metadata, hUser, client);
 
+    if (!ok) {
+      client.chat.postEphemeral({
+        channel: IMPRESSIONS_CHANNEL_ID!!,
+        user: body.user.id,
+        text: "There was an error submitting your honest impression for review. Please try again later. Ask a maintainer to check if the app is in the review channel.",
+      });
+      return;
+    } else {
+      client.chat.postEphemeral({
+        channel: IMPRESSIONS_CHANNEL_ID!!,
+        user: body.user.id,
+        text: "Your honest impression has been submitted for review. Thank you!",
+      });
+    }
+  });
+
+
+  app.action("approve_impression", async ({ ack, body, action, client }) => {
+    await ack();
+
+    console.log(body)
   });
 
 
@@ -124,15 +112,32 @@ const BuildApp = (): App => {
 
 
 
-function sendImpressionToReview(impression: RichText, parentTs: string, hashedUser: string, client: webApi.WebClient) {
+async function sendImpressionToReview(impression: RichText, parentTs: string, hashedUser: string, client: webApi.WebClient): Promise<boolean> {
+
+  let thread_permalink = "";
+  try {
+
+    thread_permalink = (await client.chat.getPermalink({
+      channel: IMPRESSIONS_CHANNEL_ID!!,
+      message_ts: parentTs
+    })).permalink!!;
+
+  } catch (e) {
+    return false;
+  }
+
   let reviewMessage = Message()
     .channel(REVIEW_CHANNEL_ID)
+    
     .text("New honest impression to review, open in the slack app to review.")
     .blocks(
       Blocks.Section().text(`New honest impression to review. `),
       Divider(),
       CustomRichText(impression),
       Divider(),
+      Context().elements(
+        `See parent message: <${thread_permalink}|here>`,
+      ),
       Actions()
         .elements(
           Button()
@@ -150,6 +155,14 @@ function sendImpressionToReview(impression: RichText, parentTs: string, hashedUs
             .value(hashedUser),
         ),
     );
-    
+
+  try {
+    //TODO: I actually have no idea on how to disable the message preview but maybe it's useful so I'll leave it for now
+    await client.chat.postMessage({ ...reviewMessage.buildToObject(), unfurl_links: true, unfurl_media: true});
+    return true;
+  } catch (error) {
+    return false;
+  }
+
 }
 export default BuildApp;
