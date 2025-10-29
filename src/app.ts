@@ -83,6 +83,7 @@ const BuildApp = (): App => {
       client.chat.postEphemeral({
         channel: IMPRESSIONS_CHANNEL_ID!!,
         user: body.user.id,
+        thread_ts: view.private_metadata,
         text: "There was an error submitting your honest impression for review. Please try again later. Ask a maintainer to check if the app is in the review channel.",
       }).catch(_=>_);
       return;
@@ -90,6 +91,7 @@ const BuildApp = (): App => {
       client.chat.postEphemeral({
         channel: IMPRESSIONS_CHANNEL_ID!!,
         user: body.user.id,
+        thread_ts: view.private_metadata,
         text: "Your honest impression has been submitted for review. Thank you!",
       }).catch(_=>_);
     }
@@ -170,7 +172,7 @@ const BuildApp = (): App => {
       "elements": [
         {
           "type": "mrkdwn",
-          "text": `:white_check_mark: This honest impression poster has been banned by <@${body.user.id}>.`
+          "text": `:fried_egg: This honest impression poster has been banned by <@${body.user.id}>.`
         }
       ]
     }
