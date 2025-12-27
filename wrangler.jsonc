@@ -4,5 +4,15 @@
 	"compatibility_flags": [
         "nodejs_compat",
         "nodejs_compat_populate_process_env"
-    ]
+    ],
+
+    "kv_namespaces": [
+        {
+            "binding":"BANNED",
+            "id": "d0b3b47ac94e484dae435d19c88abe97"
+        }
+    ],
+    "vars": {
+        "DEPLOYMENT": "KV"
+    }
 }

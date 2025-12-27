@@ -29,6 +29,11 @@ export async function InitBannedList() {
 }
 
 export function IsUserBanned(userHash: string): boolean {
+
+    if (process.env.DEPLOYMENT === 'cf-workers') {
+        let banned = ((process.env.KV as any).get("banned_hashes") as string)
+        return banned.includes(userHash)
+    }
     return banned.includes(userHash);
 }
 
@@ -43,6 +48,14 @@ export function GenerateErrorModal(error:string){
 }
 
 export async function BanUser(userHash: string): Promise<boolean> {
+
+    if (process.env.DEPLOYMENT === 'cf-workers') {
+        let banned = ((process.env.KV as any).get("banned_hashes") as string)
+        if (banned.includes(userHash)) return false;
+
+        (process.env.KV as any).put("banned_hashes", banned.concat(","+userHash))
+        return true
+    }
   const fs = await import("node:fs/promises");
   if (banned.includes(userHash)) return false;
   banned.push(userHash);
