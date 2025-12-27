@@ -1,13 +1,20 @@
 import 'dotenv/config';
 
 
-const { SLACK_SIGNING_SECRET, SLACK_BOT_TOKEN, PORT, SALT, BANNED_LIST_LOCATION, REVIEWERS } = process.env;
+const { SLACK_SIGNING_SECRET, SLACK_APP_TOKEN, SLACK_BOT_TOKEN, PORT, SALT, BANNED_LIST_LOCATION, REVIEWERS } = process.env;
 import BuildApp from './app.js';
 import { InitBannedList } from './utils.js';
+import { App } from '@slack/bolt';
 
 async function main() {
+    const _app = new App({
+    signingSecret: SLACK_SIGNING_SECRET,
+    token: SLACK_BOT_TOKEN,
+    appToken: SLACK_APP_TOKEN,
+    socketMode: !PORT,
+  });
 
-    const app = BuildApp();
+    const app = BuildApp(_app);
 
     if (!BANNED_LIST_LOCATION) {
         console.log("WARN: BANNED_LIST_LOCATION not set, storing banned user list on memory. This will make the banned list reset on every app restart.");

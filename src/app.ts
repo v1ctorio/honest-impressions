@@ -1,4 +1,4 @@
-import Slack, { App, BlockButtonAction, MessageShortcut, SlackShortcutMiddlewareArgs, webApi } from "@slack/bolt";
+import Slack, { App, BlockButtonAction, MessageShortcut, SlackShortcutMiddlewareArgs, StringIndexed, webApi } from "@slack/bolt";
 import { Actions, Blocks, Button, Context, Divider, Message, Modal } from 'slack-block-builder';
 import { BanUser, CustomRichText, GenerateErrorModal, HashUser, IsUserBanned, RichText, RichTextInput } from "./utils.js";
 
@@ -7,18 +7,7 @@ const { SLACK_SIGNING_SECRET, SLACK_APP_TOKEN, SLACK_BOT_TOKEN, PORT, SALT, BANN
 
 const reviewers = REVIEWERS ? REVIEWERS.split(",") : [];
 
-const BuildApp = (): App => {
-
-
-  const app = new App({
-    signingSecret: SLACK_SIGNING_SECRET,
-    token: SLACK_BOT_TOKEN,
-    appToken: SLACK_APP_TOKEN,
-    socketMode: !PORT,
-  });
-
-
-
+const BuildApp = (app: App<StringIndexed>): App => {
 
 
   app.shortcut("reply_impression", async ({ ack, body, say }: SlackShortcutMiddlewareArgs<MessageShortcut>) => {

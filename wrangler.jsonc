@@ -1,0 +1,8 @@
+{
+	"name": "honest-impressions",
+	"main": "src/cloudflare.ts",
+	"compatibility_flags": [
+        "nodejs_compat",
+        "nodejs_compat_populate_process_env"
+    ]
+}

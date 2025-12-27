@@ -1,7 +1,6 @@
 import crypto from "node:crypto";
 import { Blocks, Modal } from "slack-block-builder";
 
-import fs from "fs/promises";
 
 var banned: Array<string> = [];
 export type RichText = Array<any>;
@@ -17,6 +16,8 @@ export function HashUser(userId: string): string {
 }
 
 export async function InitBannedList() {
+  const fs = await import("node:fs/promises");
+
   if (!BANNED_LIST_LOCATION) return; 
   try {
     const raw = await fs.readFile(BANNED_LIST_LOCATION, "utf8");
@@ -42,6 +43,7 @@ export function GenerateErrorModal(error:string){
 }
 
 export async function BanUser(userHash: string): Promise<boolean> {
+  const fs = await import("node:fs/promises");
   if (banned.includes(userHash)) return false;
   banned.push(userHash);
   if (BANNED_LIST_LOCATION) await fs.appendFile(BANNED_LIST_LOCATION, userHash + "\n");
