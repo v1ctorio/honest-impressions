@@ -133,10 +133,13 @@ const BuildApp = (app: App<StringIndexed>): App => {
 
   app.action<BlockButtonAction>("delete_impression", async ({ ack, body, client }) => {
     await ack();
+
     try {
-      await client.chat.delete({
+      await client.chat.update({
         channel: REVIEW_CHANNEL_ID!,
         ts: body.message!.ts,
+        text: `Deleted by ${body.user.username}`,
+        blocks: []
       });
     } catch (e) {
       client.chat.postEphemeral({
