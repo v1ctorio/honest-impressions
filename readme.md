@@ -10,9 +10,9 @@ Stateless[^1] slack bot able to send replies anonymously to a thread in a specif
 
 
 
-Also read [transcental/honest-impressions#3](github.com/transcental/honest-impressions/pull/3).
+Also read [transcental/honest-impressions#3](https://github.com/transcental/honest-impressions/pull/3).
 
-For a setup guide, read dev.md
+For a setup guide, read [dev.md](./dev.md)
 
 # Concerns
 This bot is designed to minimize data storage. However, purely by being a Slack app, it is NOT fully anonymous. If a bad actor was able to extract both the app's slack credentials and the salt used for hashing, they could potentially deanonymize users. \
